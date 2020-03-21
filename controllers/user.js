@@ -5,7 +5,7 @@ const passport = require('passport');
 const _ = require('lodash');
 const validator = require('validator');
 const mailChecker = require('mailchecker');
-const User = require('../models/User');
+const User = require('../models/User-pg');
 
 const randomBytesAsync = promisify(crypto.randomBytes);
 
@@ -93,26 +93,27 @@ exports.postSignup = (req, res, next) => {
   }
   req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
 
-  const user = new User({
+  const newUser = User.build({
     email: req.body.email,
     password: req.body.password
   });
 
-  User.findOne({ email: req.body.email }, (err, existingUser) => {
-    if (err) { return next(err); }
-    if (existingUser) {
+  User.findOne({ where: { email: req.body.email } }).then((user) => {
+    if (user) {
       req.flash('errors', { msg: 'Account with that email address already exists.' });
       return res.redirect('/signup');
     }
-    user.save((err) => {
-      if (err) { return next(err); }
-      req.logIn(user, (err) => {
-        if (err) {
-          return next(err);
-        }
-        res.redirect('/');
-      });
-    });
+
+    newUser.save()
+      .then((user) => {
+        req.logIn(user, (err) => {
+          if (err) {
+            return next(err);
+          }
+          res.redirect('/');
+        });
+      })
+      .catch((err) => next(err));
   });
 };
 

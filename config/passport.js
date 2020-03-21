@@ -16,15 +16,15 @@ const { OAuth2Strategy } = require('passport-oauth');
 const _ = require('lodash');
 const moment = require('moment');
 
-const User = require('../models/User');
+const User = require('../models/User-pg');
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
 passport.deserializeUser((id, done) => {
-  User.findById(id, (err, user) => {
-    done(err, user);
+  User.findOne({ where: { id } }).then((user) => {
+    done(null, user.dataValues);
   });
 });
 
