@@ -15,6 +15,12 @@ class User extends Sequelize.Model {
     const md5 = crypto.createHash('md5').update(this.email).digest('hex');
     return `https://gravatar.com/avatar/${md5}?s=${size}&d=retro`;
   }
+
+  comparePassword(candidatePassword, cb) {
+    bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
+      cb(err, isMatch);
+    });
+  }
 }
 
 User.init({
