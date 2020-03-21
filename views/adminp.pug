@@ -1,0 +1,28 @@
+extends layout
+
+block content
+    .pb-1.mt-1.mb-5.border-bottom
+        h4 Contact Form
+
+    form(method='POST')
+        input(type='hidden', name='_csrf', value=_csrf)
+        .form-group.row
+            label.col-md-3.col-form-label.font-weight-bold.text-right(for='oldUrl') Old url
+            .col-md-7
+                input.form-control(type='url', name='oldUrl', id='oldUrl', placeholder='Insert old url ...', autofocus, required)
+        .form-group.row
+            label.col-md-3.col-form-label.font-weight-bold.text-right(for='newUrl') New url
+            .col-md-7
+                input.form-control(type='url', name='newUrl', id='newUrl', placeholder='Insert new url ...', required)
+        .form-group
+            .offset-md-4.col-md-7.pl-2
+                button.col-md-9.btn.btn-primary(type='submit')
+                    | Save record
+        .form-group
+            .offset-md-3.col-md-7.pl-2
+                hr
+
+    ul
+        if books
+            for book in books
+                li= book.name

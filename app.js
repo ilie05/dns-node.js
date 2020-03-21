@@ -62,6 +62,7 @@ mongoose.connection.on('error', (err) => {
 /**
  * Express configuration.
  */
+app.use(express.static('views'));
 app.set('host', process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0');
 app.set('port', process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080);
 app.set('views', path.join(__dirname, 'views'));
@@ -142,7 +143,8 @@ app.post('/contact', contactController.postContact);
 app.get('/account/verify', passportConfig.isAuthenticated, userController.getVerifyEmail);
 app.get('/account/verify/:token', passportConfig.isAuthenticated, userController.getVerifyEmailToken);
 app.get('/account', passportConfig.isAuthenticated, userController.getAccount);
-app.get('/admin', passportConfig.isAuthenticated, adminController.index);
+app.get('/admin', passportConfig.isAuthenticated, adminController.getAdmin);
+app.post('/admin', passportConfig.isAuthenticated, adminController.postAdmin);
 app.post('/account/profile', passportConfig.isAuthenticated, userController.postUpdateProfile);
 app.post('/account/password', passportConfig.isAuthenticated, userController.postUpdatePassword);
 app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
