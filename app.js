@@ -19,6 +19,9 @@ const expressStatusMonitor = require('express-status-monitor');
 const sass = require('node-sass-middleware');
 const multer = require('multer');
 
+// eslint-disable-next-line import/no-unresolved
+require('./db/postrgesql-connect');
+
 const upload = multer({ dest: path.join(__dirname, 'uploads') });
 
 /**
