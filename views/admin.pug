@@ -1,0 +1,52 @@
+extends layout
+
+block content
+    .pb-1.mt-1.mb-5.border-bottom
+        h4 Admin dashboard
+
+    form(method='POST')
+        input(type='hidden', name='_csrf', value=_csrf)
+        .form-group.row
+            label.col-md-3.col-form-label.font-weight-bold.text-right(for='oldUrl') Old url
+            .col-md-7
+                input.form-control(type='text', name='oldUrl', id='oldUrl', placeholder='Insert...', autofocus, required)
+        .form-group.row
+            label.col-md-3.col-form-label.font-weight-bold.text-right(for='newUrl') New url
+            .col-md-7
+                input.form-control(type='text', name='newUrl', id='newUrl', placeholder='Insert...', required)
+        .form-group
+            .offset-md-4.col-md-7.pl-2
+                button.col-md-9.btn.btn-primary(type='submit')
+                    | Save record
+        .form-group
+            .offset-md-3.col-md-7.pl-2
+                hr
+
+    if domains
+        table.table.table-hover.table-active
+            thead
+                tr
+                    th(scope='col') #
+                    th(scope='col') First
+                    th(scope='col') Last
+                    th(scope='col') Delete
+            for domain in domains
+                tbody
+                    tr
+                        th=domain.id
+                        th=domain.oldDomain
+                        th=domain.newDomain
+                        th
+                            form(method='POST', action='admin/delete')
+                                input(type='hidden', name='_csrf', value=_csrf)
+                                input(type='hidden', name='id', value=domain.id)
+                                button.btn.btn-outline-danger.btn-sm(type='submit') Delete
+
+
+    script.
+        var fun = function (a) {
+          return a * a;
+        }
+        console.log(fun(5))
+
+

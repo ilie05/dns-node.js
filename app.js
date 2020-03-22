@@ -144,8 +144,11 @@ app.post('/contact', contactController.postContact);
 app.get('/account/verify', passportConfig.isAuthenticated, userController.getVerifyEmail);
 app.get('/account/verify/:token', passportConfig.isAuthenticated, userController.getVerifyEmailToken);
 app.get('/account', passportConfig.isAuthenticated, userController.getAccount);
+
 app.get('/admin', passportConfig.isAuthenticated, adminController.getAdmin);
 app.post('/admin', passportConfig.isAuthenticated, adminController.postAdmin);
+app.post('/admin/delete', passportConfig.isAuthenticated, adminController.deleteDomain);
+
 app.post('/account/profile', passportConfig.isAuthenticated, userController.postUpdateProfile);
 app.post('/account/password', passportConfig.isAuthenticated, userController.postUpdatePassword);
 app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
@@ -255,7 +258,7 @@ if (process.env.NODE_ENV === 'development') {
   // only use in development
   app.use(errorHandler());
 } else {
-  app.use((err, req, res, next) => {
+  app.use((err, req, res) => {
     console.error(err);
     res.status(500).send('Server Error');
   });
