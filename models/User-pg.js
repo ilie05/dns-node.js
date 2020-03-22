@@ -40,11 +40,14 @@ User.init({
   picture: {
     type: Sequelize.STRING,
   },
-  facebook_id: {
+  facebook: {
     type: Sequelize.STRING,
   },
-  google_id: {
+  google: {
     type: Sequelize.STRING,
+  },
+  tokens: {
+    type: Sequelize.ARRAY(Sequelize.TEXT)
   }
 }, {
   // options
@@ -53,7 +56,9 @@ User.init({
 });
 
 User.beforeCreate(async (user) => {
-  user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
+  if (user.password) {
+    user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10), null);
+  }
 });
 
 User.sync();

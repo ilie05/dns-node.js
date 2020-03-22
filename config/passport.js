@@ -130,52 +130,57 @@ passport.use(new FacebookStrategy({
   passReqToCallback: true
 }, (req, accessToken, refreshToken, profile, done) => {
   if (req.user) {
-    User.findOne({ facebook: profile.id }, (err, existingUser) => {
-      if (err) { return done(err); }
-      if (existingUser) {
-        req.flash('errors', { msg: 'There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
-        done(err);
-      } else {
-        User.findById(req.user.id, (err, user) => {
-          if (err) { return done(err); }
-          user.facebook = profile.id;
-          user.tokens.push({ kind: 'facebook', accessToken });
-          user.profile.name = user.profile.name || `${profile.name.givenName} ${profile.name.familyName}`;
-          user.profile.gender = user.profile.gender || profile._json.gender;
-          user.profile.picture = user.profile.picture || `https://graph.facebook.com/${profile.id}/picture?type=large`;
-          user.save((err) => {
-            req.flash('info', { msg: 'Facebook account has been linked.' });
-            done(err, user);
-          });
-        });
-      }
-    });
-  } else {
-    User.findOne({ facebook: profile.id }, (err, existingUser) => {
-      if (err) { return done(err); }
-      if (existingUser) {
-        return done(null, existingUser);
-      }
-      User.findOne({ email: profile._json.email }, (err, existingEmailUser) => {
-        if (err) { return done(err); }
-        if (existingEmailUser) {
-          req.flash('errors', { msg: 'There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings.' });
-          done(err);
+    User.findOne({ where: { facebook: profile.id } })
+      .then((existingUser) => {
+        if (existingUser) {
+          req.flash('errors', { msg: 'There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
+          done(null);
         } else {
-          const user = new User();
-          user.email = profile._json.email;
-          user.facebook = profile.id;
-          user.tokens.push({ kind: 'facebook', accessToken });
-          user.profile.name = `${profile.name.givenName} ${profile.name.familyName}`;
-          user.profile.gender = profile._json.gender;
-          user.profile.picture = `https://graph.facebook.com/${profile.id}/picture?type=large`;
-          user.profile.location = (profile._json.location) ? profile._json.location.name : '';
-          user.save((err) => {
-            done(err, user);
-          });
+          User.findOne({ where: { id: req.user.id } })
+            .then((user) => {
+              user.facebook = profile.id;
+              user.tokens.push({ kind: 'facebook', accessToken });
+              user.name = user.profile.name || `${profile.name.givenName} ${profile.name.familyName}`;
+              user.picture = user.profile.picture || `https://graph.facebook.com/${profile.id}/picture?type=large`;
+              user.save()
+                .then((user) => {
+                  req.flash('info', { msg: 'Facebook account has been linked.' });
+                  done(null, user);
+                })
+                .catch((err) => done(err));
+            })
+            .catch((err) => done(err));
         }
-      });
-    });
+      })
+      .catch((err) => done(err));
+  } else {
+    User.findOne({ where: { facebook: profile.id } })
+      .then((existingUser) => {
+        if (existingUser) {
+          return done(null, existingUser);
+        }
+        User.findOne({ where: { email: profile._json.email } })
+          .then((existingEmailUser) => {
+            if (existingEmailUser) {
+              req.flash('errors', { msg: 'There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings.' });
+              done(null);
+            } else {
+              const user = User.build();
+              user.email = profile._json.email;
+              user.facebook = profile.id;
+              user.tokens = [{ kind: 'facebook', accessToken }];
+              user.name = `${profile.name.givenName} ${profile.name.familyName}`;
+              user.picture = `https://graph.facebook.com/${profile.id}/picture?type=large`;
+              user.save()
+                .then((user) => {
+                  done(null, user);
+                })
+                .catch((err) => done(err, user));
+            }
+          })
+          .catch((err) => done(err));
+      })
+      .catch((err) => done(err));
   }
 }));
 

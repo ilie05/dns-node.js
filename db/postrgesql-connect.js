@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('db-name', 'your-username', 'your-password', { host: 'localhost', dialect: 'postgres' });
+const sequelize = new Sequelize('test', 'postgres', 'qweasd', { host: 'localhost', dialect: 'postgres' });
 
 sequelize
   .authenticate()
@@ -9,6 +9,7 @@ sequelize
   })
   .catch((err) => {
     console.error('Unable to connect to the database:', err);
+    process.exit();
   });
 
 module.exports = sequelize;
