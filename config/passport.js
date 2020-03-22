@@ -308,61 +308,67 @@ const googleStrategyConfig = new GoogleStrategy({
   passReqToCallback: true
 }, (req, accessToken, refreshToken, params, profile, done) => {
   if (req.user) {
-    User.findOne({ google: profile.id }, (err, existingUser) => {
-      if (err) { return done(err); }
-      if (existingUser && (existingUser.id !== req.user.id)) {
-        req.flash('errors', { msg: 'There is already a Google account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
-        done(err);
-      } else {
-        User.findById(req.user.id, (err, user) => {
-          if (err) { return done(err); }
-          user.google = profile.id;
-          user.tokens.push({
-            kind: 'google',
-            accessToken,
-            accessTokenExpires: moment().add(params.expires_in, 'seconds').format(),
-            refreshToken,
-          });
-          user.profile.name = user.profile.name || profile.displayName;
-          user.profile.gender = user.profile.gender || profile._json.gender;
-          user.profile.picture = user.profile.picture || profile._json.picture;
-          user.save((err) => {
-            req.flash('info', { msg: 'Google account has been linked.' });
-            done(err, user);
-          });
-        });
-      }
-    });
-  } else {
-    User.findOne({ google: profile.id }, (err, existingUser) => {
-      if (err) { return done(err); }
-      if (existingUser) {
-        return done(null, existingUser);
-      }
-      User.findOne({ email: profile.emails[0].value }, (err, existingEmailUser) => {
-        if (err) { return done(err); }
-        if (existingEmailUser) {
-          req.flash('errors', { msg: 'There is already an account using this email address. Sign in to that account and link it with Google manually from Account Settings.' });
-          done(err);
+    User.findOne({ where: { google: profile.id } })
+      .then((existingUser) => {
+        if (existingUser && (existingUser.id !== req.user.id)) {
+          req.flash('errors', { msg: 'There is already a Google account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
+          done(null);
         } else {
-          const user = new User();
-          user.email = profile.emails[0].value;
-          user.google = profile.id;
-          user.tokens.push({
-            kind: 'google',
-            accessToken,
-            accessTokenExpires: moment().add(params.expires_in, 'seconds').format(),
-            refreshToken,
-          });
-          user.profile.name = profile.displayName;
-          user.profile.gender = profile._json.gender;
-          user.profile.picture = profile._json.picture;
-          user.save((err) => {
-            done(err, user);
-          });
+          User.findOne({ where: { id: req.user.id } })
+            .then((user) => {
+              user.google = profile.id;
+              user.tokens.push({
+                kind: 'google',
+                accessToken,
+                accessTokenExpires: moment().add(params.expires_in, 'seconds').format(),
+                refreshToken
+              });
+              user.name = user.profile.name || profile.displayName;
+              user.picture = user.profile.picture || profile._json.picture;
+              user.save()
+                .then((user) => {
+                  req.flash('info', { msg: 'Google account has been linked.' });
+                  done(null, user);
+                })
+                .catch((err) => done(err));
+            })
+            .catch((err) => done(err));
         }
-      });
-    });
+      })
+      .catch((err) => done(err));
+  } else {
+    User.findOne({ where: { google: profile.id } })
+      .then((existingUser) => {
+        if (existingUser) {
+          return done(null, existingUser);
+        }
+        User.findOne({ where: { email: profile.emails[0].value } })
+          .then((existingEmailUser) => {
+            if (existingEmailUser) {
+              req.flash('errors', { msg: 'There is already an account using this email address. Sign in to that account and link it with Google manually from Account Settings.' });
+              done(null);
+            } else {
+              const user = User.build();
+              user.email = profile.emails[0].value;
+              user.google = profile.id;
+              user.tokens = [{
+                kind: 'google',
+                accessToken,
+                accessTokenExpires: moment().add(params.expires_in, 'seconds').format(),
+                refreshToken
+              }];
+              user.name = profile.displayName;
+              user.picture = profile._json.picture;
+              user.save()
+                .then((user) => {
+                  done(null, user);
+                })
+                .catch((err) => done(err, user));
+            }
+          })
+          .catch((err) => done(err));
+      })
+      .catch((err) => done(err));
   }
 });
 passport.use('google', googleStrategyConfig);
